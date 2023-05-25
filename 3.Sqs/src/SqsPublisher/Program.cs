@@ -9,11 +9,7 @@ var customer = new CustomerCreated
 {
     Id = Guid.NewGuid(),
     Email = "ShadowTheHedgehog@gmail.com",
-    FullName = new Name
-    {
-        FirstName = "Shadow",
-        LastName = "Hedgehog"
-    },
+    FullName = "Shadow The Hedgehog",
     DateOfBirth = new DateTime(2000, 01, 01),
     GithubUsername = "IAmFasterThanSonic"
 };
