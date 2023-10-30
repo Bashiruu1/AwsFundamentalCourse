@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using Customers.Consumers.Messages;
+using MediatR;
 using Microsoft.Extensions.Options;
 
 namespace Customers.Consumers;
@@ -9,16 +11,20 @@ public class QueueConsumerService : BackgroundService
 {
     private readonly IAmazonSQS _sqs;
     private readonly IOptions<QueueSettings> _queueSettings;
+    private readonly IMediator _mediator;
+    private readonly ILogger<QueueConsumerService> _logger;
 
-    public QueueConsumerService(IAmazonSQS sqs, IOptions<QueueSettings> queueSettings)
+    public QueueConsumerService(IAmazonSQS sqs, IOptions<QueueSettings> queueSettings, IMediator mediator, ILogger<QueueConsumerService> logger)
     {
         _sqs = sqs;
         _queueSettings = queueSettings;
+        _mediator = mediator;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var queueUrlResponse = await _sqs.GetQueueUrlAsync("customers", stoppingToken);
+        var queueUrlResponse = await _sqs.GetQueueUrlAsync(_queueSettings.Value.Name, stoppingToken);
         var recieveMessageRequest = new ReceiveMessageRequest
         {
             QueueUrl = queueUrlResponse.QueueUrl,
@@ -34,23 +40,25 @@ public class QueueConsumerService : BackgroundService
 
             foreach (var message in response.Messages)
             {
-                var messageType = message.MessageAttributes["MessageType"].StringValue;
+                var messageTypeString = message.MessageAttributes["MessageType"].StringValue;
+                var messageType = Type.GetType($"$Customers.Consumers.Messages.{messageTypeString}");
 
-                switch (messageType)
+                if (messageType is null)
                 {
-                    case nameof(CustomerCreated):
-                        var created = JsonSerializer.Deserialize<CustomerCreated>(message.Body);
-                        break;
-                    case nameof(CustomerUpdated):
-                        var updated = JsonSerializer.Deserialize<CustomerUpdated>(message.Body);
-                        break;
-                    case nameof(CustomerDeleted):
-                        var deleted = JsonSerializer.Deserialize<CustomerDeleted>(message.Body);
-                        break;
+                    _logger.LogWarning("Unkwown message type: {messageTypeString}", messageTypeString);
+                    continue;
                 }
-                Console.WriteLine($"Message Id: {message.MessageId}");
-                Console.WriteLine($"Message Body: {message.Body}");
 
+                var typedMessage = (ISqsMessage)JsonSerializer.Deserialize(message.Body, messageType)!;
+                try
+                {
+                    await _mediator.Send(typedMessage, stoppingToken);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Message failed during processing");
+                    continue;
+                }
                 await _sqs.DeleteMessageAsync(queueUrlResponse.QueueUrl, message.ReceiptHandle, stoppingToken);
             }
             await Task.Delay(3000);

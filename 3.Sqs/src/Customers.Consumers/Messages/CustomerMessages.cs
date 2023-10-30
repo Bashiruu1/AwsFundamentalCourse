@@ -1,6 +1,8 @@
-namespace Customers.Consumers;
+using MediatR;
 
-public record CustomerCreated
+namespace Customers.Consumers.Messages;
+
+public record CustomerCreated : ISqsMessage
 {
     public required Guid Id { get; init; }
     public required string FullName { get; init; }
@@ -9,7 +11,7 @@ public record CustomerCreated
     public required DateTime DateOfBirth { get; init; }
 }
 
-public record CustomerUpdated
+public record CustomerUpdated : ISqsMessage
 {
     public required Guid Id { get; init; }
     public required string FullName { get; init; }
@@ -18,7 +20,7 @@ public record CustomerUpdated
     public required DateTime DateOfBirth { get; init; }
 }
 
-public record CustomerDeleted
+public record CustomerDeleted : ISqsMessage
 {
     public required Guid Id { get; init; }
 }
