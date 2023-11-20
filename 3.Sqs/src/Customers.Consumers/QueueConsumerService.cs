@@ -40,8 +40,8 @@ public class QueueConsumerService : BackgroundService
 
             foreach (var message in response.Messages)
             {
-                var messageTypeString = message.MessageAttributes["MessageType"].StringValue;
-                var messageType = Type.GetType($"Customers.Consumers.Messages.{messageTypeString}");
+                message.MessageAttributes.TryGetValue("MessageType", out var messageTypeString);
+                var messageType = Type.GetType($"Customers.Consumers.Messages.{messageTypeString?.StringValue}");
 
                 if (messageType is null)
                 {
