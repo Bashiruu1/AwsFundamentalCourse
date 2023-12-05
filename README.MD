@@ -25,6 +25,30 @@ dotnet sln AwsFundamentalsCourse.sln add 4.Sns/src/Customers.Consumers/Customers
 dotnet sln AwsFundamentalsCourse.sln add 4.Sns/src/Customers.Api/Customers.Api.csproj
 ```
 
+## DynamoDB Project to start
+
+Copy the Customers.Api project over into 5.DynamoDB/src folder..
+
+```shell
+dotnet sln AwsFundamentalsCourse.sln add 5.DynamoDB/src/Customers.Api/Customers.Api.csproj
+```
+
+To generate the dynamoDB table please run the following terraform command below
+
+```shell
+cd "cd 5.DynamoDB/terraform/"
+terraform plan
+terraform apply --auto-approve=true
+```
+
+To destroy the resources run these commands
+
+```shell
+terraform plan -destroy
+terraform apply -destroy --auto-approve=true
+
+```
+
 # Installing Packages
 
 ```shell
