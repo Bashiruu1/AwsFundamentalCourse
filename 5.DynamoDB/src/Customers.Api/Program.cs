@@ -1,6 +1,5 @@
 using Amazon.DynamoDBv2;
 using Amazon.SQS;
-using Customers.Api.Database;
 using Customers.Api.Messaging;
 using Customers.Api.Repositories;
 using Customers.Api.Services;
@@ -24,9 +23,6 @@ builder.Services.AddControllers().AddFluentValidation(x =>
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddSingleton<IDbConnectionFactory>(_ =>
-    new SqliteConnectionFactory(config.GetValue<string>("Database:ConnectionString")!));
 
 builder.Services.Configure<QueueSettings>(builder.Configuration.GetSection(QueueSettings.Key));
 builder.Services.AddSingleton<IAmazonSQS, AmazonSQSClient>();

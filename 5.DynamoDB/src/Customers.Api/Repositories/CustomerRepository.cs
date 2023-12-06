@@ -26,7 +26,8 @@ public class CustomerRepository : ICustomerRepository
         var createItemRequest = new PutItemRequest
         {
             TableName = _tableName,
-            Item = customerAsAttributeMap
+            Item = customerAsAttributeMap,
+            ConditionExpression = "attribute_not_exist(pk) and attribute_not_exist(sk)"
         };
 
         var response = await _dynamoDb.PutItemAsync(createItemRequest);
@@ -57,10 +58,20 @@ public class CustomerRepository : ICustomerRepository
 
     public async Task<IEnumerable<CustomerDto>> GetAllAsync()
     {
-        throw new NotImplementedException();
+        var scanRequest = new ScanRequest
+        {
+            TableName = _tableName
+        };
+
+        var response = await _dynamoDb.ScanAsync(scanRequest);
+        return response.Items.Select(x =>
+        {
+            var json = Document.FromAttributeMap(x).ToJson();
+            return JsonSerializer.Deserialize<CustomerDto>(json)!;
+        });
     }
 
-    public async Task<bool> UpdateAsync(CustomerDto customer)
+    public async Task<bool> UpdateAsync(CustomerDto customer, DateTime requestStarted)
     {
         customer.UpdatedAt = DateTime.UtcNow;
         var customerAsJson = JsonSerializer.Serialize(customer);
@@ -69,7 +80,12 @@ public class CustomerRepository : ICustomerRepository
         var updateItemRequest = new PutItemRequest
         {
             TableName = _tableName,
-            Item = customerAsAttributeMap
+            Item = customerAsAttributeMap, 
+            ConditionExpression = "UpdatedAt < :requestStarted",
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                {":requestStarted", new AttributeValue{ S = requestStarted.ToString("O")}}
+            }
         };
 
         var response = await _dynamoDb.PutItemAsync(updateItemRequest);
