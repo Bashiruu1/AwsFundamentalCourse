@@ -31,6 +31,7 @@ Copy the Customers.Api project over into 5.DynamoDB/src folder..
 
 ```shell
 dotnet sln AwsFundamentalsCourse.sln add 5.DynamoDB/src/Customers.Api/Customers.Api.csproj
+dotnet sln AwsFundamentalsCourse.sln add 5.DynamoDB/src/Movies.Api/Movies.Api.csproj
 ```
 
 To generate the dynamoDB table please run the following terraform command below
