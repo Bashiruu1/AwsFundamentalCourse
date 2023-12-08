@@ -1,4 +1,4 @@
-resource "aws_dynamodb_table" "customers_table" {
+resource "aws_dynamodb_table" "table" {
   name           = var.db_name
   hash_key       = "pk"
   range_key      = "sk"

@@ -5,5 +5,15 @@ provider "aws" {
 
 module "aws_dynamodb_table" {
   source = "./modules/dynamodb"
-  db_name = "customers"
+
+  count = length(var.tables)
+
+  db_name = var.tables[count.index]
+  tags = local.tags
+}
+
+locals {
+  tags = {
+    created_by = "terraform"
+  }
 }
