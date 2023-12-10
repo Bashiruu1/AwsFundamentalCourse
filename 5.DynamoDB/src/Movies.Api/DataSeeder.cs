@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net;
+using System.Text.Json;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
@@ -9,9 +10,9 @@ public class DataSeeder
 {
     public async Task ImportDataAsync()
     {
-        var dynamoDb = new AmazonDynamoDBClient();
+        var dynamoDbClient = new AmazonDynamoDBClient();
         var lines = await File.ReadAllLinesAsync("./movies.csv");
-        for (int i = 0; i < lines.Length; i++)
+        for (var i = 0; i < lines.Length; i++)
         {
             if (i == 0)
             {
@@ -26,7 +27,7 @@ public class DataSeeder
             var ageRestriction = int.Parse(commaSplit[2]);
             var rottenTomatoes = int.Parse(commaSplit[3]);
 
-            var movie = new Movie
+            var movie1 = new MovieYearTitle
             {
                 Id = Guid.NewGuid(),
                 Title = title,
@@ -35,18 +36,59 @@ public class DataSeeder
                 RottenTomatoesPercentage = rottenTomatoes
             };
             
-            var movieAsJson = JsonSerializer.Serialize(movie);
-            var itemAsDocument = Document.FromJson(movieAsJson);
-            var itemAsAttributes = itemAsDocument.ToAttributeMap();
-
-            var createItemRequest = new PutItemRequest
+            var movie2 = new MovieTitleRotten
             {
-                TableName = "movies",
-                Item = itemAsAttributes
+                Id = Guid.NewGuid(),
+                Title = title,
+                AgeRestriction = ageRestriction,
+                ReleaseYear = year,
+                RottenTomatoesPercentage = rottenTomatoes
+            };
+            
+            var asJsonMovieYearTitle = JsonSerializer.Serialize(movie1);
+            var asJsonMovieTitleRotten = JsonSerializer.Serialize(movie2);
+
+            var attributeMapMovieYearTitle = Document.FromJson(asJsonMovieYearTitle).ToAttributeMap();
+            var attributeMapMovieTitleRotten = Document.FromJson(asJsonMovieTitleRotten).ToAttributeMap();
+
+            var transactionRequest = new TransactWriteItemsRequest
+            {
+                TransactItems = new List<TransactWriteItem>
+                {
+                    new()
+                    {
+                        Put = new Put
+                        {
+                            TableName = "movies-year-title",
+                            Item = attributeMapMovieYearTitle
+                        }
+                    },
+                    new()
+                    {
+                        Put = new Put
+                        {
+                            TableName = "movies-title-rotten",
+                            Item = attributeMapMovieTitleRotten
+                        }
+                    }
+                }
             };
 
-            var response = await dynamoDb.PutItemAsync(createItemRequest);
+            
+
+            var response = await dynamoDbClient.TransactWriteItemsAsync(transactionRequest);
+            
+            EnsureSuccess(response.HttpStatusCode);
+            
             await Task.Delay(300);
+        }
+    }
+
+    private static void EnsureSuccess(HttpStatusCode httpStatusCode)
+    {
+        if (httpStatusCode >= HttpStatusCode.BadRequest)
+        {
+            throw new Exception("I failed somewhere...");
         }
     }
 }
