@@ -27,14 +27,14 @@ public class CustomerRepository : ICustomerRepository
         {
             TableName = _tableName,
             Item = customerAsAttributeMap,
-            ConditionExpression = "attribute_not_exist(pk) and attribute_not_exist(sk)"
+            ConditionExpression = "attribute_not_exists(pk) and attribute_not_exists(sk)"
         };
 
         var response = await _dynamoDb.PutItemAsync(createItemRequest);
         return response.HttpStatusCode == HttpStatusCode.OK;
     }
 
-    public async Task<CustomerDto?> GetAsync(Guid id)
+    public async Task<CustomerDto?> GetByIdAsync(Guid id)
     {
         var getItemRequest = new GetItemRequest
         {
@@ -53,6 +53,31 @@ public class CustomerRepository : ICustomerRepository
         }
 
         var itemAsDocument = Document.FromAttributeMap(response.Item);
+        return JsonSerializer.Deserialize<CustomerDto>(itemAsDocument.ToJson());
+    }
+    
+    public async Task<CustomerDto?> GetByEmailAsync(string email)
+    {
+        var queryRequest = new QueryRequest
+        {
+            TableName = _tableName,
+            IndexName = "email-id-index",
+            KeyConditionExpression = "Email = :v_Email",
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                {
+                    ":v_Email", new AttributeValue { S = email }
+                }
+            }
+        };
+        
+        var response = await _dynamoDb.QueryAsync(queryRequest);
+        if (response.Items.Count == 0)
+        {
+            return null;
+        }
+
+        var itemAsDocument = Document.FromAttributeMap(response.Items.FirstOrDefault());
         return JsonSerializer.Deserialize<CustomerDto>(itemAsDocument.ToJson());
     }
 

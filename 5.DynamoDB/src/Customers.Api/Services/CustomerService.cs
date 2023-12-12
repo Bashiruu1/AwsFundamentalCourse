@@ -24,7 +24,7 @@ public class CustomerService : ICustomerService
 
     public async Task<bool> CreateAsync(Customer customer)
     {
-        var existingUser = await _customerRepository.GetAsync(customer.Id);
+        var existingUser = await _customerRepository.GetByIdAsync(customer.Id);
         if (existingUser is not null)
         {
             var message = $"A user with id {customer.Id} already exists";
@@ -48,9 +48,15 @@ public class CustomerService : ICustomerService
         return response;
     }
 
-    public async Task<Customer?> GetAsync(Guid id)
+    public async Task<Customer?> GetByIdAsync(Guid id)
     {
-        var customerDto = await _customerRepository.GetAsync(id);
+        var customerDto = await _customerRepository.GetByIdAsync(id);
+        return customerDto?.ToCustomer();
+    }
+
+    public async Task<Customer?> GetByEmailAsync(string email)
+    {
+        var customerDto = await _customerRepository.GetByEmailAsync(email);
         return customerDto?.ToCustomer();
     }
 

@@ -1,4 +1,11 @@
-variable "db_name" {
+variable "table_config" {
+  type = object({
+    create_gsi = bool
+    create_lsi = bool
+  })
+}
+
+variable "table_name" {
   type = string
 }
 
