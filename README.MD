@@ -50,6 +50,14 @@ terraform apply -destroy --auto-approve=true
 
 ```
 
+## S3 Project to start
+
+Copy the Customers.Api project over into 6.S3/src folder..
+
+```shell
+dotnet sln AwsFundamentalsCourse.sln add 6.S3/src/Customers.Api/Customers.Api.csproj
+dotnet sln AwsFundamentalsCourse.sln add 6.S3/src/S3Playground/S3Playground.csproj
+```
 # Installing Packages
 
 ```shell
